@@ -47,11 +47,12 @@ const Login = () => {
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Email:</label>
+            <label>Username:</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your username"
               required
             />
           </div>
@@ -61,6 +62,7 @@ const Login = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
               required
             />
           </div>
@@ -68,11 +70,6 @@ const Login = () => {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        <div className="demo-credentials">
-          <p>Demo credentials:</p>
-          <p>Email: test@example.com</p>
-          <p>Password: password123</p>
-        </div>
       </div>
     </div>
   );
