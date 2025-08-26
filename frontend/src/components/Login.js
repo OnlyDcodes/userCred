@@ -4,13 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
 const Login = () => {
+  // State management
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Hooks
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // Event handlers
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -40,36 +44,85 @@ const Login = () => {
     }
   };
 
+  const handleEmailChange = (e) => setEmail(e.target.value);
+  const handlePasswordChange = (e) => setPassword(e.target.value);
+
+  // Render functions
+  const renderLoadingSpinner = () => (
+    <span className="loading-spinner">
+      <div className="spinner" />
+      Signing in...
+    </span>
+  );
+
+  const renderForm = () => (
+    <form onSubmit={handleSubmit} className="login-form">
+      <div className="form-group">
+        <label className="form-label">Email Address</label>
+        <input
+          type="email"
+          value={email}
+          onChange={handleEmailChange}
+          placeholder="Enter your email address"
+          className="form-input"
+          required
+        />
+      </div>
+      
+      <div className="form-group">
+        <label className="form-label">Password</label>
+        <input
+          type="password"
+          value={password}
+          onChange={handlePasswordChange}
+          placeholder="Enter your password"
+          className="form-input"
+          required
+        />
+      </div>
+      
+      <button 
+        type="submit" 
+        disabled={loading} 
+        className="login-button"
+      >
+        {loading ? renderLoadingSpinner() : 'Sign In'}
+      </button>
+    </form>
+  );
+
+  // Main render
   return (
     <div className="login-container">
-      <div className="login-card">
-        <h2>Login</h2>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Username:</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your username"
-              required
-            />
+      {/* Background with Location Pin Theme */}
+      <div className="login-background">
+        <div className="location-pin-bg" />
+        <div className="login-overlay" />
+      </div>
+      
+      {/* Login Content */}
+      <div className="login-content">
+        <div className="login-card">
+          {/* Header */}
+          <div className="login-header">
+            <h1 className="login-title">Welcome Back</h1>
+            <p className="login-subtitle">Sign in to your account</p>
           </div>
-          <div className="form-group">
-            <label>Password:</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-            />
+          
+          {/* Error Message */}
+          {error && <div className="error-message">{error}</div>}
+          
+          {/* Login Form */}
+          {renderForm()}
+          
+          {/* Footer */}
+          <div className="login-footer">
+            <p className="footer-text">
+              Don't have an account?{' '}
+              <span className="signup-link">Contact Admin</span>
+            </p>
           </div>
-          <button type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   );

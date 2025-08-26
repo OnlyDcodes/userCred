@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import './Home.css';
 
 const Home = () => {
-  const { logout, user } = useAuth();
+  // State management
   const [currentLocation, setCurrentLocation] = useState(null);
   const [searchIp, setSearchIp] = useState('');
   const [searchedLocation, setSearchedLocation] = useState(null);
@@ -11,12 +11,18 @@ const Home = () => {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
   const [selectedHistory, setSelectedHistory] = useState([]);
+  const [hiddenIPs, setHiddenIPs] = useState(new Set());
 
+  // Hooks
+  const { logout, user } = useAuth();
+
+  // Effects
   useEffect(() => {
     fetchCurrentLocation();
     loadHistory();
   }, []);
 
+  // API functions
   const fetchCurrentLocation = async () => {
     try {
       const response = await fetch('https://ipinfo.io/geo');
@@ -42,6 +48,7 @@ const Home = () => {
     }
   };
 
+  // Event handlers
   const handleSearch = async () => {
     if (!searchIp.trim()) return;
     
@@ -97,117 +104,233 @@ const Home = () => {
     );
   };
 
+  // Utility functions
   const saveHistory = (historyData) => {
-    localStorage.setItem('ipHistory', JSON.stringify(historyData));
+    localStorage.setItem('locationHistory', JSON.stringify(historyData));
   };
 
   const loadHistory = () => {
-    const saved = localStorage.getItem('ipHistory');
-    if (saved) {
-      setHistory(JSON.parse(saved));
+    const savedHistory = localStorage.getItem('locationHistory');
+    if (savedHistory) {
+      setHistory(JSON.parse(savedHistory));
     }
   };
 
-  const displayLocation = searchedLocation || currentLocation;
+  const toggleIPVisibility = (ip) => {
+    setHiddenIPs(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(ip)) {
+        newSet.delete(ip);
+      } else {
+        newSet.add(ip);
+      }
+      return newSet;
+    });
+  };
 
-  return (
-    <div className="home-container">
-      <header className="header">
-        <h1>IP Geolocation App</h1>
-        <div className="user-info">
-          <span>Welcome, {user?.name}</span>
-          <button onClick={logout} className="logout-btn">Logout</button>
-        </div>
-      </header>
+  const maskIP = (ip) => {
+    if (!ip) return 'Unknown';
+    const parts = ip.split('.');
+    return parts.map((part, index) => 
+      index < 2 ? part : '***'
+    ).join('.');
+  };
 
-      <div className="main-content">
-        <div className="search-section">
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Enter IP address..."
-              value={searchIp}
-              onChange={(e) => setSearchIp(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            />
-            <button onClick={handleSearch} disabled={loading}>
-              {loading ? 'Searching...' : 'Search'}
-            </button>
-            <button onClick={handleClear} className="clear-btn">
-              Clear
-            </button>
-          </div>
-          
-          {error && <div className="error-message">{error}</div>}
-        </div>
+  const renderIPWithToggle = (ip, label = 'IP') => {
+    if (!ip) return `${label}: Unknown`;
+    
+    const isHidden = hiddenIPs.has(ip);
+    const displayIP = isHidden ? maskIP(ip) : ip;
+    
+    return (
+      <div className="ip-with-toggle">
+        <span className="ip-label">{label}:</span>
+        <span className="ip-value">{displayIP}</span>
+        <button 
+          onClick={() => toggleIPVisibility(ip)}
+          className={`ip-toggle-inline ${isHidden ? 'hidden' : 'visible'}`}
+          title={isHidden ? 'Show IP' : 'Hide IP'}
+          type="button"
+        >
+          {isHidden ? '👁️‍🗨️' : '👁️'}
+        </button>
+      </div>
+    );
+  };
 
-        {displayLocation && (
-          <div className="location-display">
-            <h3>Location Information</h3>
-            <div className="location-grid">
-              <div className="location-item">
-                <strong>IP:</strong> {displayLocation.ip}
-              </div>
-              <div className="location-item">
-                <strong>City:</strong> {displayLocation.city}
-              </div>
-              <div className="location-item">
-                <strong>Region:</strong> {displayLocation.region}
-              </div>
-              <div className="location-item">
-                <strong>Country:</strong> {displayLocation.country}
-              </div>
-              <div className="location-item">
-                <strong>Location:</strong> {displayLocation.loc}
-              </div>
-              <div className="location-item">
-                <strong>Timezone:</strong> {displayLocation.timezone}
-              </div>
-            </div>
-          </div>
-        )}
+  // Render functions
+  const renderCurrentLocation = () => {
+    if (!currentLocation) {
+      return <p className="loading-text">Loading current location...</p>;
+    }
 
-        <div className="history-section">
-          <div className="history-header">
-            <h3>Search History</h3>
-            {selectedHistory.length > 0 && (
-              <button onClick={handleHistoryDelete} className="delete-btn">
-                Delete Selected ({selectedHistory.length})
-              </button>
-            )}
-          </div>
-          
-          <div className="history-list">
-            {history.map((item) => (
-              <div 
-                key={item.id} 
-                className={`history-item ${searchedLocation?.ip === item.ip ? 'active' : ''}`}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedHistory.includes(item.id)}
-                  onChange={() => toggleHistorySelection(item.id)}
-                />
-                <div 
-                  className="history-content"
-                  onClick={() => handleHistoryClick(item)}
-                >
-                  <div className="history-ip">{item.ip}</div>
-                  <div className="history-location">
-                    {item.location.city}, {item.location.country}
-                  </div>
-                  <div className="history-time">
-                    {new Date(item.timestamp).toLocaleString()}
-                  </div>
-                </div>
-              </div>
-            ))}
-            {history.length === 0 && (
-              <div className="no-history">No search history yet</div>
-            )}
+    return (
+      <div className="location-info">
+        <div className="location-details">
+          <p className="location-text">
+            <strong>City:</strong> {currentLocation.city || 'Unknown'}
+          </p>
+          <p className="location-text">
+            <strong>Region:</strong> {currentLocation.region || 'Unknown'}
+          </p>
+          <p className="location-text">
+            <strong>Country:</strong> {currentLocation.country || 'Unknown'}
+          </p>
+          <div className="location-text">
+            {renderIPWithToggle(currentLocation.ip, 'IP')}
           </div>
         </div>
       </div>
+    );
+  };
+
+  const renderSearchResults = () => {
+    if (!searchedLocation) return null;
+
+    return (
+      <div className="search-results">
+        <h3 className="results-title">Search Results</h3>
+        <div className="location-info">
+          <div className="location-text">
+            {renderIPWithToggle(searchedLocation.ip, 'IP')}
+          </div>
+          <p className="location-text">
+            <strong>City:</strong> {searchedLocation.city || 'Unknown'}
+          </p>
+          <p className="location-text">
+            <strong>Region:</strong> {searchedLocation.region || 'Unknown'}
+          </p>
+          <p className="location-text">
+            <strong>Country:</strong> {searchedLocation.country || 'Unknown'}
+          </p>
+          <p className="location-text">
+            <strong>Timezone:</strong> {searchedLocation.timezone || 'Unknown'}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  const renderHistoryItem = (item) => (
+    <div 
+      key={item.id} 
+      className={`history-item ${selectedHistory.includes(item.id) ? 'selected' : ''}`}
+      onClick={() => handleHistoryClick(item)}
+    >
+      <div className="history-content">
+        <div className="history-ip">
+          {renderIPWithToggle(item.ip)}
+        </div>
+        <div className="history-location">
+          {item.location.city}, {item.location.country}
+        </div>
+        <div className="history-timestamp">
+          {new Date(item.timestamp).toLocaleDateString()}
+        </div>
+      </div>
+      <input
+        type="checkbox"
+        checked={selectedHistory.includes(item.id)}
+        onChange={(e) => {
+          e.stopPropagation();
+          toggleHistorySelection(item.id);
+        }}
+        className="history-checkbox"
+      />
+    </div>
+  );
+
+  // Main render
+  return (
+    <div className="home-container">
+      {/* Background Image Overlay */}
+      <div className="background-overlay" />
+      
+      {/* Header */}
+      <header className="home-header">
+        <div className="header-content">
+          <h1 className="main-title">Location Tracker</h1>
+          <div className="user-section">
+            <span className="welcome-text">
+              Welcome, {user?.name || user?.email || 'User'}!
+            </span>
+            <button 
+              className="logout-btn" 
+              onClick={logout}
+              type="button"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="main-content">
+        {/* Current Location Card */}
+        <section className="location-card current-location">
+          <h2 className="card-title">📍 Current Location</h2>
+          {renderCurrentLocation()}
+        </section>
+
+        {/* Search Section */}
+        <section className="location-card search-section">
+          <h2 className="card-title">🔍 Search IP Location</h2>
+          <div className="search-container">
+            <div className="search-input-group">
+              <input
+                type="text"
+                value={searchIp}
+                onChange={(e) => setSearchIp(e.target.value)}
+                placeholder="Enter IP address (e.g., 8.8.8.8)"
+                className="search-input"
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              />
+              <button 
+                onClick={handleSearch} 
+                disabled={loading || !searchIp.trim()}
+                className="search-btn"
+                type="button"
+              >
+                {loading ? 'Searching...' : 'Search'}
+              </button>
+            </div>
+            {searchIp && (
+              <button 
+                onClick={handleClear} 
+                className="clear-btn"
+                type="button"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {error && <div className="error-message">{error}</div>}
+          {renderSearchResults()}
+        </section>
+
+        {/* History Section */}
+        {history.length > 0 && (
+          <section className="location-card history-section">
+            <div className="history-header">
+              <h2 className="card-title">📚 Search History</h2>
+              {selectedHistory.length > 0 && (
+                <button 
+                  onClick={handleHistoryDelete} 
+                  className="delete-selected-btn"
+                  type="button"
+                >
+                  Delete Selected ({selectedHistory.length})
+                </button>
+              )}
+            </div>
+            <div className="history-list">
+              {history.map(renderHistoryItem)}
+            </div>
+          </section>
+        )}
+      </main>
     </div>
   );
 };

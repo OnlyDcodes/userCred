@@ -5,32 +5,44 @@ import Home from './components/Home';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './App.css';
 
+// Private route component - requires authentication
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
+// Public route component - redirects if already authenticated
 const PublicRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? <Navigate to="/" /> : children;
 };
 
+// Main app component
 function App() {
   return (
     <AuthProvider>
       <Router>
         <div className="App">
           <Routes>
-            <Route path="/login" element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            } />
-            <Route path="/" element={
-              <PrivateRoute>
-                <Home />
-              </PrivateRoute>
-            } />
+            {/* Login Route */}
+            <Route 
+              path="/login" 
+              element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              } 
+            />
+            
+            {/* Home Route */}
+            <Route 
+              path="/" 
+              element={
+                <PrivateRoute>
+                  <Home />
+                </PrivateRoute>
+              } 
+            />
           </Routes>
         </div>
       </Router>
