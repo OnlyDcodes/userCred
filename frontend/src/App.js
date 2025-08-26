@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Home from './components/Home';
+import ContactAdmin from './components/ContactAdmin';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './App.css';
 
@@ -30,6 +31,16 @@ function App() {
               element={
                 <PublicRoute>
                   <Login />
+                </PublicRoute>
+              } 
+            />
+            
+            {/* Contact Admin Route */}
+            <Route 
+              path="/contact-admin" 
+              element={
+                <PublicRoute>
+                  <ContactAdmin />
                 </PublicRoute>
               } 
             />

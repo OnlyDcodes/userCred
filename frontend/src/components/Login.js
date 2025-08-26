@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import './Login.css';
 
 const Login = () => {
@@ -119,7 +119,7 @@ const Login = () => {
           <div className="login-footer">
             <p className="footer-text">
               Don't have an account?{' '}
-              <span className="signup-link">Contact Admin</span>
+              <Link to="/contact-admin" className="signup-link">Contact Admin</Link>
             </p>
           </div>
         </div>
